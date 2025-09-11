@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+
+- Update to Unicode 17.0.0.
+
 ## 0.2.6
 
 - Update to Unicode 16.0.0.
