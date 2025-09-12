@@ -75,13 +75,13 @@ jobs:
       - name: Run tests without features
         run: cargo test --no-default-features --verbose
       - name: Package
-        run: cargo package --offline
+        run: cargo package
       - name: Test package
         working-directory: target/package/${{ needs.get-package-info.outputs.name }}-${{ needs.get-package-info.outputs.version }}/
-        run: cargo test --offline
+        run: cargo test --verbose
       - name: Test package without features
         working-directory: target/package/${{ needs.get-package-info.outputs.name }}-${{ needs.get-package-info.outputs.version }}/
-        run: cargo test --no-default-features --offline
+        run: cargo test --no-default-features --verbose
       - name: Run benchmarks
         run: cargo bench --features bench --verbose
         if: matrix.rust == 'nightly'
