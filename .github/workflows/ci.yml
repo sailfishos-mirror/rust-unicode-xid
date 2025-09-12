@@ -78,7 +78,7 @@ jobs:
         working-directory: target/package/${{ needs.get-package-info.outputs.name }}-${{ needs.get-package-info.outputs.version }}/
         run: cargo test --no-default-features --offline
       - name: Run benchmarks
-        run: cargo bench
+        run: cargo bench --features bench --verbose
         if: matrix.rust == 'nightly'
       - name: Build docs
         run: cargo doc --all-features --verbose
