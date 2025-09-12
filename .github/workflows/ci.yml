@@ -49,6 +49,10 @@ jobs:
           - stable
           - beta
           - nightly
+        exclude:
+          # excludes MSRV on Windows due to linker issues
+          - os: windows-latest
+            rust: ${{ needs.get-package-info.outputs.msrv }}
     steps:
       - uses: actions/checkout@v5
       - name: Install toolchain
