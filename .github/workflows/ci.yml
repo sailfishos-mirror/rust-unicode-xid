@@ -75,7 +75,7 @@ jobs:
       - name: Run tests without features
         run: cargo test --no-default-features --verbose
       - name: Package
-        run: cargo package
+        run: cargo package --allow-dirty
       - name: Test package
         working-directory: target/package/${{ needs.get-package-info.outputs.name }}-${{ needs.get-package-info.outputs.version }}/
         run: cargo test --verbose
