@@ -52,10 +52,16 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install toolchain
+        if: matrix.rust != needs.get-package-info.outputs.msrv
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
           components: rustfmt, clippy
+      - name: Install MSRV toolchain
+        if: matrix.rust == needs.get-package-info.outputs.msrv
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ needs.get-package-info.outputs.msrv }}
       - name: Build
         run: cargo build --verbose
       - name: Run tests with all features
