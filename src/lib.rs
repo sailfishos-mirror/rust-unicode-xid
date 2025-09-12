@@ -14,10 +14,8 @@
 //! ```rust
 //! use unicode_xid::UnicodeXID;
 //!
-//! fn main() {
-//!     assert_eq!(UnicodeXID::is_xid_start('a'), true); // 'a' is a valid start of an identifier
-//!     assert_eq!(UnicodeXID::is_xid_start('△'), false); // '△' is a NOT valid start of an identifier
-//! }
+//! assert_eq!(UnicodeXID::is_xid_start('a'), true); // 'a' is a valid start of an identifier
+//! assert_eq!(UnicodeXID::is_xid_start('△'), false); // '△' is a NOT valid start of an identifier
 //! ```
 //!
 //! # features
@@ -33,7 +31,7 @@
     html_favicon_url = "https://unicode-rs.github.io/unicode-rs_sm.png"
 )]
 #![no_std]
-#![cfg_attr(feature = "bench", feature(test, unicode_internals))]
+#![cfg_attr(feature = "bench", feature(test))]
 
 #[cfg(test)]
 #[macro_use]

@@ -1,13 +1,19 @@
 extern crate unicode_xid;
+
 use unicode_xid::UnicodeXID;
 /// A `char` in Rust is a Unicode Scalar Value
 ///
 /// See: http://www.unicode.org/glossary/#unicode_scalar_value
-fn all_valid_chars() -> impl Iterator<Item = char> {
-    (0u32..=0xD7FF).chain(0xE000u32..=0x10FFFF).map(|u| {
-        core::convert::TryFrom::try_from(u)
-            .expect("The selected range should be infallible if the docs match impl")
-    })
+fn all_valid_chars() -> Vec<char> {
+    (0u32..0xD7FF)
+        .chain(Some(0xD7FF))
+        .chain(0xE000u32..0x10FFFF)
+        .chain(Some(0x10FFFF))
+        .map(|u| {
+            std::char::from_u32(u)
+                .expect("The selected range should be infallible if the docs match impl")
+        })
+        .collect()
 }
 
 #[test]

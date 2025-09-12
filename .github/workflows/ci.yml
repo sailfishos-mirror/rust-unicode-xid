@@ -2,35 +2,103 @@ name: CI
 
 on:
   push:
+    branches: [ master ]
   pull_request:
-  schedule: [cron: "40 1 * * *"]
+    branches: [ master ]
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  RUSTFLAGS: -D warnings
+  RUSTDOCFLAGS: -D warnings --cfg docsrs
 
 jobs:
-  test:
-    name: Rust ${{matrix.rust}}
+  get-package-info:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        rust: [nightly, beta, stable]
+    outputs:
+      msrv: ${{ steps.msrv.outputs.metadata }}
+      name: ${{ steps.name.outputs.metadata }}
+      version: ${{ steps.version.outputs.metadata }}
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v5
+      - name: Get MSRV
+        id: msrv
+        uses: nicolaiunrein/cargo-get@v1.4.0
         with:
-          toolchain: ${{matrix.rust}}
-          profile: minimal
-          override: true
-      - run: cargo build --features bench
+          subcommand: 'package.rust_version'
+      - name: Get package name
+        id: name
+        uses: nicolaiunrein/cargo-get@v1.4.0
+        with:
+          subcommand: 'package.name'
+      - name: Get package version
+        id: version
+        uses: nicolaiunrein/cargo-get@v1.4.0
+        with:
+          subcommand: 'package.version'
+
+  build_test:
+    needs: get-package-info
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest ]
+        rust:
+          - ${{ needs.get-package-info.outputs.msrv }}
+          - stable
+          - beta
+          - nightly
+        exclude:
+          # excludes MSRV on Windows due to linker issues
+          - os: windows-latest
+            rust: ${{ needs.get-package-info.outputs.msrv }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install toolchain
+        if: matrix.rust != needs.get-package-info.outputs.msrv
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.rust }}
+          components: rustfmt, clippy
+      - name: Install MSRV toolchain
+        if: matrix.rust == needs.get-package-info.outputs.msrv
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ needs.get-package-info.outputs.msrv }}
+      - name: Remove dev-dependencies for MSRV (very dirty hack)
+        if: matrix.rust == needs.get-package-info.outputs.msrv
+        shell: pwsh
+        run: |
+          (Get-Content Cargo.toml) -replace '^\[dev-dependencies\].*?(\n\[|$)', '[placeholder]' | Set-Content Cargo.toml
+      - name: Build
+        run: cargo build --verbose
+      - name: Run tests with all features
+        run: cargo test --all-features --verbose
         if: matrix.rust == 'nightly'
-      - run: cargo test --features bench
+      - name: Run tests without features
+        run: cargo test --no-default-features --verbose
+      - name: Package
+        run: cargo package --allow-dirty
+      - name: Test package
+        working-directory: target/package/${{ needs.get-package-info.outputs.name }}-${{ needs.get-package-info.outputs.version }}/
+        run: cargo test --verbose
+      - name: Test package without features
+        working-directory: target/package/${{ needs.get-package-info.outputs.name }}-${{ needs.get-package-info.outputs.version }}/
+        run: cargo test --no-default-features --verbose
+      - name: Run benchmarks
+        run: cargo bench --features bench --verbose
         if: matrix.rust == 'nightly'
-      - run: cargo bench --features bench
+      - name: Build docs
+        run: cargo doc --all-features --verbose
         if: matrix.rust == 'nightly'
-      - run: cargo build
+
   tables:
     name: Verify tables
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v5
+      - name: Regenerate tables
+        run: ./scripts/unicode.py && rustfmt tables.rs
       - name: Verify regenerated files
-        run: ./scripts/unicode.py && rustfmt tables.rs && diff tables.rs src/tables.rs
+        run:  diff tables.rs src/tables.rs
