@@ -14,10 +14,8 @@
 //! ```rust
 //! use unicode_xid::UnicodeXID;
 //!
-//! fn main() {
-//!     assert_eq!(UnicodeXID::is_xid_start('a'), true); // 'a' is a valid start of an identifier
-//!     assert_eq!(UnicodeXID::is_xid_start('△'), false); // '△' is a NOT valid start of an identifier
-//! }
+//! assert_eq!(UnicodeXID::is_xid_start('a'), true); // 'a' is a valid start of an identifier
+//! assert_eq!(UnicodeXID::is_xid_start('△'), false); // '△' is a NOT valid start of an identifier
 //! ```
 //!
 //! # features
